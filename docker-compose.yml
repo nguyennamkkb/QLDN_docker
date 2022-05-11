@@ -1,0 +1,63 @@
+version: '3'
+services:
+  
+  #PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: qldn
+    container_name: QLDN-app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - QLDN-network
+
+  #Nginx Service
+  webserver:
+    image: nginx:1.19-alpine 
+    container_name: QLDN-webserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - 9000:80
+    volumes:
+      - ./:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - QLDN-network
+
+  #MySQL Service
+  db:
+    image: mysql:5.7
+    container_name: QLDN-db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: quanlydoanhnghiep
+      MYSQL_ROOT_PASSWORD: 1234
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - QLDN-network
+
+#Docker Networks
+networks:
+  QLDN-network:
+    driver: bridge
+#Volumes
+volumes:
+  dbdata:
+    driver: local
